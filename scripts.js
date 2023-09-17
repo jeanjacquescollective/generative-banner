@@ -27,6 +27,54 @@ function noEffect(ctx, text, x, y) {
   ctx.fillText(text, x, y);
 }
 
+// Function to write event name in a circle, date in the middle, and Dutch month abbreviation
+function writeEventDetails(ctx, eventName, eventDate, centerX, centerY, radius) {
+  // const centerX = canvas.width / 2;
+  // const centerY = canvas.height / 2;
+  // const radius = Math.min(canvas.width, canvas.height) / 2 - 20;
+
+  // Write event name in a circle
+  ctx.font = '24px Arial';
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  ctx.save();
+  ctx.translate(centerX, centerY);
+  ctx.rotate(-Math.PI / 2);
+
+  const words = eventName.split(' ');
+  let angle = -Math.PI / 2;
+  const step = (Math.PI * 2) / words.length;
+
+  for (const word of words) {
+      ctx.save();
+      ctx.translate(radius * Math.cos(angle), radius * Math.sin(angle));
+      ctx.rotate(angle + Math.PI / 2);
+      ctx.fillText(word, 0, 0);
+      ctx.restore();
+      angle += step;
+  }
+
+  ctx.restore();
+
+  // Parse the event date
+  const dateParts = eventDate.split('-');
+  const day = parseInt(dateParts[2], 10);
+  const month = parseInt(dateParts[1], 10);
+  const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MEI', 'JUN', 'JUL', 'AUG', 'SEP', 'OKT', 'NOV', 'DEC'];
+  const monthAbbreviation = monthNames[month - 1];
+
+  // Write date in the middle with format "xx (number) month abbreviation"
+  ctx.font = '32px Arial';
+  ctx.fillStyle = 'white';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  ctx.fillText(`${day.toString().padStart(2, '0')} (${day}) ${monthAbbreviation}`, centerX, centerY);
+}
+
+
 // Function to add a rainbow effect to text
 function applyRainbowEffect(ctx, text, x, y, amplitude, frequency, phase) {
   const characters = text.split("");
@@ -53,14 +101,14 @@ async function createImageCollage(folderPath, canvasWidth, canvasHeight) {
 
   // Load and draw each image in the folder onto the canvas
   const files = fs.readdirSync(folderPath);
-  for (let index = 0; index < 10; index++) {
+  for (let index = 0; index < 5; index++) {
     for (const file of files) {
       if (file.endsWith(".png")) {
-        const resizedWidth = Math.floor(Math.random() * 100) + 100;
+        const resizedWidth = Math.floor(Math.random() * 1000) + 100;
         const imagePath = path.join(folderPath, file);
         const image = await loadImage(imagePath);
         const ratio = image.width / image.height;
-        const posX = Math.floor(Math.random() * (canvasWidth - resizedWidth));
+        const posX = Math.floor(Math.random() * (canvasWidth)) - (resizedWidth / 2);
         const posY = Math.floor(
           Math.random() * (canvasHeight - resizedWidth / ratio)
         );
@@ -126,18 +174,22 @@ async function generateEventBanner(events, collageCanvas, outputImagePath) {
   let yOffset = 50;
 
   events.forEach((event) => {
-    applyTextEffect(ctx, event.name, 50, yOffset, 10, 0.05, 0);
-    applyTextEffect(ctx, event.date, 50, yOffset + 70, 5, 0.02, Math.PI / 4);
-    applyTextEffect(
-      ctx,
-      event.description,
-      50,
-      yOffset + 140,
-      7,
-      0.05,
-      Math.PI / 2
-    );
-    yOffset += 250;
+    const centerX = Math.random() * collageCanvas.width / 2;
+    const centerY = Math.random() * collageCanvas.height / 2;
+    const radius = Math.floor(Math.random() * Math.min(collageCanvas.width, collageCanvas.height) / 4) ;
+    writeEventDetails(ctx, event.name, event.date, centerX, centerY, radius);
+    // applyTextEffect(ctx, event.name, 50, yOffset, 10, 0.05, 0);
+    // applyTextEffect(ctx, event.date, 50, yOffset + 70, 5, 0.02, Math.PI / 4);
+    // applyTextEffect(
+    //   ctx,
+    //   event.description,
+    //   50,
+    //   yOffset + 140,
+    //   7,
+    //   0.05,
+    //   Math.PI / 2
+    // );
+    // yOffset += 250;
   });
 
   // Save the canvas as an image
